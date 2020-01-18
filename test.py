@@ -26,9 +26,11 @@ find_dbms_payloads = {
 
 # POST request
 if(method == "POST"):
+    #Check for data params
     if(not args.data):
         print("When POST method is specified you must pass the data argument")
     else: 
+        
         dataArgs = args.data.split(",")
         print(dataArgs)
         postParams = {}
@@ -36,7 +38,9 @@ if(method == "POST"):
             arg = arg.split("=");
             postParams[arg[0]] = arg[1]
         print(postParams)
-        requests.post(args.url, postParams)                    
+                    
+
+
 #GET request    
 elif(method == "GET"):
     print("ASfas")
@@ -44,8 +48,14 @@ else:
     print("Method got incorrect value")        
 
 
+
+#In case of a post request which has a form that needs to send multiple params
+#we have to send 6 * number of params requests to test if vulnerable and to find
+#the dbms system
 def permute_post_params(params):
     requests = {}
     length = len(params)
     for payload in find_dbms_payloads:
-        print(payload)
+        minirequest = {}
+        requests[payload]
+        for
