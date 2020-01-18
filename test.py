@@ -13,6 +13,8 @@ args = parser.parse_args()
 method = str.upper(args.method)
 
 
+
+
 #Payloads to find the dbms
 #Each one works only on selected dialect
 find_dbms_payloads = {
