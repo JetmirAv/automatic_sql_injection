@@ -43,13 +43,9 @@ app.get("/", async (req, res) => {
 
 app.post("/test", async (req, res) => {
   try {
-    let query =
-      "Select * from users where name iLike '%" + req.body.name + "%' and email ilike '%" + req.body.email + "%';";
-    let result = await client.query( {
-      text: query,
-      rawMode: "array"
-    });
-    client.query(query)
+    let query = "Select * from users where name iLike '%$1%' and email ilike '%$2%';";
+    let values = [req.query.name, req.query.email];
+    let result = await client.query(query, values);
     res.status(200).send(result);
   } catch (err) {
     res.status(400).send(err);
@@ -57,10 +53,10 @@ app.post("/test", async (req, res) => {
 });
 
 app.get("/getuser", async (req, res) => {
-  let query = "Select * from users where name iLike '%" + req.query.name + "%'";
+  let query = "Select * from users where name iLike '%$1%'";
   console.log(query);
   try {
-    let response = await client.query(query);
+    let response = await client.query(query, [req.query.name]);
     res.status(200).json(response);
   } catch (err) {
     res.status(404).send("Not found");
