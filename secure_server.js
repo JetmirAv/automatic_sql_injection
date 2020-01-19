@@ -54,7 +54,6 @@ app.post("/test", async (req, res) => {
 
 app.get("/getuser", async (req, res) => {
   let query = "Select * from users where name iLike '%$1%'";
-  console.log(query);
   try {
     let response = await client.query(query, [req.query.name]);
     res.status(200).json(response);

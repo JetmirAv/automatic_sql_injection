@@ -25,16 +25,19 @@ find_dbms_payloads = {
 
 # POST request
 if(method == "POST"):
-    #Check for data params
+    #Check for data params. If not provided terminate with message
     if(not args.data):
         print("When POST method is specified you must pass the data argument")
     else: 
+        #Split args by coma (,)
         dataArgs = args.data.split(",")
         postParams = {}
+        #For each argument get key value pair
         for arg in dataArgs:
             arg = arg.split("=");
             postParams[arg[0]] = arg[1]
         requestList = {}
+        #For each param append one of payloads and test it.
         for param in postParams:
             for payload in find_dbms_payloads:
                 data = postParams.copy()
@@ -54,7 +57,7 @@ if(method == "POST"):
 #GET request
 elif(method == "GET"):
     requestList = {}
-    headers = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36'}
+    #For each payload send a request and test the response
     for payload in find_dbms_payloads:
         url = args.url + find_dbms_payloads[payload]
         resp = requests.get(url)
